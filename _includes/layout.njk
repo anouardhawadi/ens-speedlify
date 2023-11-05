@@ -1,6 +1,3 @@
----
-includeChartAssets: false
----
 <!doctype html>
 <html lang="en">
 	<head>
@@ -8,40 +5,39 @@ includeChartAssets: false
 		<meta name="viewport" content="width=device-width, initial-scale=1.0">
 		<title>Speedlify</title>
 		<meta name="description" content="Benchmark web pages over time.">
-		<link rel="icon" type="image/png" sizes="96x96" href="/img/favicon.png">
-		<link rel="stylesheet" href="/speedlify/static/style.css">
-{% if includeChartAssets %}
-		<link rel="stylesheet" href="/speedlify/static/chart-style.css">
-{% endif %}
+		<meta name="generator" content="{{ eleventy.generator }}">
+		<link rel="stylesheet" href="{{ '/style.css' | url }}">
 		<script>
 		document.documentElement.classList.add("js");
 		</script>
 	</head>
 	<body>
-		<h1 class="speedlify-hed">Eleventy Leaderboards</h1>
-		<p class="speedlify-subhed">
-			Return to the <a href="/docs/">Eleventy Documentation</a>.
-		</p>
-		<p class="speedlify-subhed">
-			Benchmark {{ sites[vertical].description or "web pages" }} over time.
-			{%- if false and maxResults %}
-				Only the last {{ maxResults }} result{% if maxResults != 1 %}s{% endif %} (and the oldest result) are shown.
-			{% endif %}
-			Created by <a href="https://www.zachleat.com/"><img src="https://v1.indieweb-avatar.11ty.dev/{{ "https://www.zachleat.com/" | urlencode }}/" class="leaderboard-list-entry-thumbnail" width="40" height="40" alt="IndieWeb Avatar for zachleat.com" loading="lazy" decoding="async">zachleat</a>.
-			<br>
-			<a href="https://github.com/11ty/11ty-community/issues/new/choose">Add your Eleventy site to this list.</a>
-			<a href="https://github.com/zachleat/speedlify/#deploy-to-netlify">Deploy your own instance of Speedlify</a>.
-		</p>
+		<header>
+			<h1 class="speedlify-hed"><a href="{{ '/' | url }}">speedlify</a>{% if vertical %}:{{ vertical }}{% endif %}</h1>
+			<p class="speedlify-subhed">
+				Benchmark {{ sites[vertical].description or "web pages" }} over time.
+				{%- if sites[vertical].unordered %}
+					Results for this category are unordered.
+				{%- endif %}
+				{%- if maxResults %}
+					Updates <em>at most</em> once every {{ sites[vertical].options.frequency or 60 }} minutes. Only the last {{ maxResults }} run{% if maxResults != 1 %}s{% endif %} (and the oldest run) are shown.
+				{%- endif %}
+				Created by <a href="https://www.zachleat.com/">@zachleat</a>.
+			</p>
+			<p class="speedlify-subhed">
+				<a href="https://github.com/zachleat/speedlify/#deploy-to-netlify">Deploy your own instance of Speedlify and test your web sites</a>.
+			</p>
+		</header>
 
-		{{ content | safe }}
+		<main>
+			{{ content | safe }}
+		</main>
 
 		<footer>
 			MIT licensed. Read <a href="https://www.zachleat.com/web/speedlify/">the blog post</a>. Source code on <a href="https://github.com/zachleat/speedlify/">GitHub</a>. Created by <a href="https://www.zachleat.com/">@zachleat</a>.
 		</footer>
 
-		<script defer src="/speedlify/static/script.js"></script>
-{% if includeChartAssets %}
-		<script defer src="/speedlify/static/chart-script.js"></script>
-{% endif %}
+		<script defer src="{{ '/chartist.js' | url }}"></script>
+		<script defer src="{{ '/script.js' | url }}"></script>
 	</body>
 </html>

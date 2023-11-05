@@ -1,9 +1,9 @@
-const syntaxHighlight = require("@11ty/eleventy-plugin-syntaxhighlight");
 const byteSize = require("byte-size");
 const shortHash = require("short-hash");
 const lodash = require("lodash");
 const getObjectKey = require("./utils/getObjectKey.js");
 const calc = require("./utils/calc.js");
+const Sparkline = require('./utils/sparkline.js');
 
 function hasUrl(urls, requestedUrl) {
 	// urls comes from sites[vertical].urls, all requestedUrls (may not include trailing slash)
@@ -14,8 +14,7 @@ function hasUrl(urls, requestedUrl) {
 	if(requestedUrl && typeof requestedUrl === "string") {
 		// TODO lowercase just the origins
 		requestedUrl = requestedUrl.toLowerCase();
-		if(lowercaseUrls.indexOf(requestedUrl) > -1 ||
-			requestedUrl.endsWith("/") && lowercaseUrls.indexOf(requestedUrl.substr(0, requestedUrl.length - 1)) > -1) {
+		if(lowercaseUrls.indexOf(requestedUrl) > -1 || requestedUrl.endsWith("/") && lowercaseUrls.indexOf(requestedUrl.substr(0, requestedUrl.length - 1)) > -1) {
 			return true;
 		}
 	}
@@ -64,26 +63,11 @@ function getLighthouseTotal(entry) {
 		entry.lighthouse.seo * 100;
 }
 
-function displayUrl(url, keepWww = false) {
-	if(!keepWww) {
-		url = url.replace("https://www.", "");
-	}
-	url = url.replace("https://", "");
-	if(url.endsWith("/index.html")) {
-		url = url.replace("/index.html", "/");
-	}
-	return url;
-}
-
 module.exports = function(eleventyConfig) {
-	eleventyConfig.setServerOptions({
-		domdiff: false
-	});
-	eleventyConfig.setWatchJavaScriptDependencies(false);
-
-	eleventyConfig.addPlugin(syntaxHighlight);
-
 	eleventyConfig.addFilter("shortHash", shortHash);
+	eleventyConfig.setServerOptions({
+		domDiff: false
+	});
 
 	eleventyConfig.addFilter("repeat", function(str, times) {
 		let result = '';
@@ -93,23 +77,6 @@ module.exports = function(eleventyConfig) {
 		}
 
 		return result;
-	});
-
-	eleventyConfig.addFilter("isNewSite", function(site) {
-		return Object.keys(site).length === 1;
-	});
-
-	eleventyConfig.addFilter("medalRank", function(rank) {
-		if(rank === 1) {
-			return "🥇";
-		}
-		if(rank === 2) {
-			return "🥈";
-		}
-		if(rank === 3) {
-			return "🥉";
-		}
-		return "";
 	});
 
 	// first ${num} entries (and the last entry too)
@@ -122,7 +89,16 @@ module.exports = function(eleventyConfig) {
 		return arr;
 	});
 
-	eleventyConfig.addFilter("displayUrl", displayUrl);
+	eleventyConfig.addFilter("displayUrl", function(url, keepWww = false) {
+		if(!keepWww) {
+			url = url.replace("https://www.", "");
+		}
+		url = url.replace("https://", "");
+		if(url.endsWith("/index.html")) {
+			url = url.replace("/index.html", "/");
+		}
+		return url;
+	});
 
 	eleventyConfig.addFilter("showDigits", function(num, digits) {
 		return showDigits(num, digits);
@@ -214,35 +190,12 @@ module.exports = function(eleventyConfig) {
 		return sorted;
 	});
 
-	eleventyConfig.addFilter("getUrlForSite", function(site) {
-		let key = getObjectKey(site);
-		let url = site[key].url;
-		if(!url) {
-			throw new Error(`Could not find URL for site: \`${JSON.stringify(site)}\` from key: \`${JSON.stringify(key)}\``);
-		}
-		return displayUrl(url);
-	});
-
 	eleventyConfig.addFilter("getObjectKey", getObjectKey);
-
-	eleventyConfig.addFilter("addSkippedIndeces", function (results, indeces = []) {
-		let out = [];
-		for(let j = 0, k = results.length; j<k; j++) {
-			if(indeces.includes(j + 1)) { // 1-index
-				out.push(false);
-			}
-			out.push(results[j]);
-		}
-		return out;
-	});
 
 	function filterResultsToUrls(obj, urls = [], skipKeys = []) {
 		let arr = [];
 		for(let key in obj) {
 			if(skipKeys.indexOf(key) > -1) {
-				continue;
-			}
-			if(key && key.startsWith("_skip_")) {
 				continue;
 			}
 
@@ -261,12 +214,6 @@ module.exports = function(eleventyConfig) {
 		let urls = sites[vertical].urls;
 		let isIsolated = sites[vertical].options && sites[vertical].options.isolated === true;
 		let prunedResults = isIsolated ? results[vertical] : results;
-
-		// Add deleted sites
-		for(let site of sites[vertical].missing) {
-			urls.push(site);
-		}
-
 		return filterResultsToUrls(prunedResults, urls, skipKeys);
 	});
 
@@ -348,24 +295,6 @@ module.exports = function(eleventyConfig) {
 		return arr;
 	});
 
-	eleventyConfig.addFilter("toFloppyDisk", function(size) {
-		let floppySize = 1474560;
-		let count = (size/floppySize).toFixed(1);
-		if(count > 4) {
-			return `💾 <em>×${Math.round(count)}</em>`;
-		}
-
-		let html = [];
-		for(let j = 0; j <= count - 1; j++) {
-			html.push(`💾`);
-		}
-
-		let modulo = (count % 1)*10;
-		html.push(`<span class="floppy-${modulo}">💾</span>`);
-
-		return html.join("");
-	});
-	
 	eleventyConfig.addFilter("toJSON", function(obj) {
 		return JSON.stringify(obj);
 	});
@@ -390,11 +319,54 @@ module.exports = function(eleventyConfig) {
 
 	// Assets
 	eleventyConfig.addPassthroughCopy({
-		// "./node_modules/chartist/dist/chartist.js": "/speedlify/static/chartist.js",
-		// "./node_modules/chartist/dist/chartist.css.map": "/speedlify/static/chartist.css.map",
-		"./node_modules/chartist/dist/chartist.min.js.map": "/speedlify/static/chartist.min.js.map",
+		"./node_modules/chartist/dist/chartist.js": "chartist.js",
+		"./node_modules/chartist/dist/chartist.css.map": "chartist.css.map",
 	});
 
 	eleventyConfig.addWatchTarget("./assets/");
-	eleventyConfig.setServerPassthroughCopyBehavior("copy");
+
+	eleventyConfig.setBrowserSyncConfig({
+		ui: false,
+		ghostMode: false
+	});
+	eleventyConfig.addShortcode('lighthouseSparkline', (site) => {
+		const timeSeries = Object.values(site).sort(
+			(a, b) => a.timestamp - b.timestamp
+		);
+		const values = timeSeries.map((run) => run.lighthouse?.total || 0);
+		return Sparkline({
+			// red-orange-green gradient similar to usage in <speedlify-score>
+			gradient: [
+				{ color: '#ff4e42', offset: '0%' },
+				{ color: '#ff4e42', offset: '30%' },
+				{ color: '#ffa400', offset: '70%' },
+				{ color: '#ffa400', offset: '85%' },
+				{ color: '#0cce6b', offset: '95%' },
+				{ color: '#0cce6b', offset: '100%' },
+			],
+			values,
+			min: 0,
+			max: 400,
+			timeSeries,
+		});
+	});
+
+	eleventyConfig.addShortcode('weightSparkline', (site) => {
+		const timeSeries = Object.values(site).sort(
+			(a, b) => a.timestamp - b.timestamp
+		);
+		const values = timeSeries.map((run) => run.weight?.total || 0);
+		return Sparkline({
+			color: '#d151ff',
+			values,
+			min: 0,
+			timeSeries,
+			// Display raw bytes as pretty values on y axis, e.g. 49244 => 48K
+			formatAxis: (num) => {
+				const { value, unit } = byteSize(num, { units: 'iec', precision: 0 });
+				return value === '0' ? value : value + unit.slice(0, 1);
+			},
+		});
+	});
+
 };

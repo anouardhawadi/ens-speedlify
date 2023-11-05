@@ -10,7 +10,7 @@ class ApiEntry {
 				alias: "site"
 			},
 			permalink: function(data) {
-				return `/speedlify/api/${data.site.hash}.json`;
+				return `/api/${data.site.hash}.json`;
 			}
 		};
 	}

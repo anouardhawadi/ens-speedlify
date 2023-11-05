@@ -1,5 +1,4 @@
 require("dotenv").config();
-const path = require("path");
 const fs = require("fs").promises;
 const shortHash = require("short-hash");
 const fastglob = require("fast-glob");
@@ -26,12 +25,12 @@ const prettyTime = (seconds) => {
 	);
 }
 
-async function tryToPreventNetlifyBuildTimeout(dateTestsStarted, numberOfUrls) {
-	let minutesRemaining = NETLIFY_MAX_LIMIT - (Date.now() - dateTestsStarted)/(1000*60)
+async function tryToPreventNetlifyBuildTimeout(dateTestsStarted, numberOfUrls, estimatedTimePerBuild = ESTIMATED_MAX_TIME_PER_TEST) {
+	let minutesRemaining = NETLIFY_MAX_LIMIT - (Date.now() - dateTestsStarted)/(1000*60);
 	if(process.env.CONTEXT &&
 		process.env.CONTEXT === "production" &&
 		NETLIFY_MAX_LIMIT &&
-		minutesRemaining < numberOfUrls * ESTIMATED_MAX_TIME_PER_TEST) {
+		minutesRemaining < numberOfUrls * estimatedTimePerBuild) {
 		console.log( `run-tests has about ${minutesRemaining} minutes left, but the next run has ${numberOfUrls} urls. Saving it for the next build.` );
 		return true;
 	}
@@ -75,7 +74,8 @@ async function tryToPreventNetlifyBuildTimeout(dateTestsStarted, numberOfUrls) {
 			continue;
 		}
 
-		if(await tryToPreventNetlifyBuildTimeout(dateTestsStarted, group.urls.length)) {
+		// TODO maybe skip this step if it’s the first build?
+		if(await tryToPreventNetlifyBuildTimeout(dateTestsStarted, group.urls.length, group.estimatedTimePerBuild)) {
 			// stop everything, we’re too close to the timeout
 			return;
 		}
@@ -105,10 +105,14 @@ async function tryToPreventNetlifyBuildTimeout(dateTestsStarted, numberOfUrls) {
 
 		let runCount =
 			group.options && group.options.runs ? group.options.runs : NUMBER_OF_RUNS;
+		let options = Object.assign({
+			chromeFlags: ['--headless', '--disable-dev-shm-usage']
+		}, group.options);
+
 		let results = await PerfLeaderboard(
 			group.urls,
 			runCount,
-			group.options || {}
+			options,
 		);
 
 		let promises = [];
