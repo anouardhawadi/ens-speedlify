@@ -7,5 +7,6 @@ module.exports = {
   },
   urls: [
     "https://ens-paris-saclay.fr/",
+    "https://ens-paris-saclay.fr/actualite"
   ]
 };
