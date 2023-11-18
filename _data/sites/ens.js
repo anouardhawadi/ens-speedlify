@@ -1,6 +1,6 @@
 module.exports = {
   name: "Ens", // optional, falls back to object key
-  description: "Ens paris sacly site",
+  description: "Ens paris sacly site : Liste 2",
   options: {
     runs: 1,
     frequency: 1, // (in minutes)
