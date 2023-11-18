@@ -25,12 +25,5 @@ module.exports = {
     "https://ens-paris-saclay.fr/admission/sur-concours/concours-dadmission-en-1ere-annee/concours-mp",
     "https://ens-paris-saclay.fr/actualite/bienvenue-aux-candidats-admissibles-2023",
     "https://ens-paris-saclay.fr/actualite",
-    "https://ens-paris-saclay.fr/admission/sur-concours/concours-dadmission-en-1ere-annee/concours-bl-sciences-sociales",
-    "https://ens-paris-saclay.fr/admission/sur-concours/concours-dadmission-en-2eme-annee",
-    "https://ens-paris-saclay.fr/lecole/venir-lecole",
-    "https://ens-paris-saclay.fr/bibliotheque",
-    "https://ens-paris-saclay.fr/lecole-0",
-    "https://ens-paris-saclay.fr/lecole/lecole",
-    "https://ens-paris-saclay.fr/formations/masters/biologie-sante",
   ]
 };
