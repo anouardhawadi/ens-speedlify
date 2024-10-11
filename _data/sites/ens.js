@@ -6,7 +6,7 @@ module.exports = {
     frequency: 1, // (in minutes)
   },
   urls: [
-    "https://ens-paris-saclay-preprod.ci.itdev.fr",
-    "https://ens-paris-saclay-preprod.ci.itdev.fr/empty-page"
+    "https://ens-paris-saclay-preprod.ci.itdev.fr/",
+    "https://ens-paris-saclay-preprod.ci.itdev.fr/empty-page",
   ]
 };
